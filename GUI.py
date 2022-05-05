@@ -8,7 +8,6 @@ import re
 def encrypt_file():
     secure_file = open(file.path, "r")
     data = secure_file.read()
-    file.isDecrypted = False
     secure_file.close()
     key = Fernet.generate_key()
     fernet = Fernet(key)
@@ -25,7 +24,6 @@ def decrypt_file():
     window['contents'].update(secure_file.read())
     window['status'].update('File Status: Decrypted')
     window['password'].update('')
-    file.isDecrypted = True
     secure_file.close()
 
 
@@ -55,13 +53,13 @@ layout2 = [
 layout = [
     [psg.Column(layout1), psg.Column(layout2)],
 ]
-
 window = psg.Window('File Encryptor', layout)
 attempts = 0
+isDecrypted = False
 while True:
     event, values = window.read()
     try:
-        file = File((str(os.path.basename(values['-IN-']))), (str(values['password'])), (str(values['-IN-'])), True,
+        file = File((str(os.path.basename(values['-IN-']))), (str(values['password'])), (str(values['-IN-'])),
                     (str(values['contents'])))
     except:
         print("Program Ended.")
@@ -76,6 +74,7 @@ while True:
                     window['password2'].update(visible=False)
                     window['pass2'].update('')
                     encrypt_file()
+                    isDecrypted = False
                 elif (len(file.password) < 6) or (len(file.password) > 11):
                     window['status'].update('File Status: Failed To Encrypt. Password must be between 6 and 10 \n'
                                             'characters in length and contain at least 1 lower case letter, '
@@ -106,6 +105,7 @@ while True:
                         window['password2'].update(visible=False)
                         window['pass2'].update('')
                         encrypt_file()
+                        isDecrypted = False
                     else:
                         window['status'].update("File Status: Failed To Encrypt. Passwords don't match.")
             elif file.password == '':
@@ -113,32 +113,30 @@ while True:
         else:
             window['status'].update('File Status: Failed To Encrypt. No file selected.')
     elif event in 'Decrypt':
-        if file.path != '':
-            if file.password != '':
-                try:
-                    if password == file.password:
-                        window['password2'].update('')
-                        window['password2'].update(visible=True)
-                        window['pass2'].update('Re-enter Password')
-                        decrypt_file()
-                    else:
-                        if attempts < 4:
-                            attempts += 1
-                            window['status'].update(
-                                'File Status: Failed To Decrypt. Password Incorrect. ' + str(5 - attempts)
-                                + ' attempts remaining')
-                        else:
-                            window.close()
-                except:
-                    print("No password selected")
+        try:
+            if password == file.password:
+                window['password2'].update('')
+                window['password2'].update(visible=True)
+                window['pass2'].update('Re-enter Password')
+                decrypt_file()
+                isDecrypted = True
             else:
-                window['status'].update('File Status: Failed To Decrypt. Password Incorrect')
-        else:
-            window['status'].update('File Status: Failed To Decrypt. No file selected.')
+                if attempts < 4:
+                    attempts += 1
+                    window['status'].update(
+                        'File Status: Failed To Decrypt. Password Incorrect. ' + str(5 - attempts)
+                        + ' attempts remaining')
+                else:
+                    window.close()
+        except:
+            window['status'].update('File Status: Failed To Decrypt. No File Selected.')
     elif event in 'Save Changes':
-        if file.isDecrypted:
-            save_file()
-        else:
-            window['status'].update('File Status: File is encrypted, unable to edit.')
+        try:
+            if isDecrypted:
+                save_file()
+            else:
+                window['status'].update('File Status: Changes Not Saved. File Encrypted.')
+        except:
+            window['status'].update('File Status: Changes Not Saved. No File Selected.')
 
 window.close()
