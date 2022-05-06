@@ -5,6 +5,8 @@ import os
 import re
 
 
+# This function encrypts the file using the Cryptography package. The GUI is then updated and the encoded message is
+# displayed to the user.
 def encrypt_file():
     secure_file = open(file.path, "r")
     data = secure_file.read()
@@ -19,6 +21,7 @@ def encrypt_file():
     window['name'].update('File Name: ' + file.name)
 
 
+# This function displays the file in plain English to the user.
 def decrypt_file():
     secure_file = open(file.path, "r")
     window['contents'].update(secure_file.read())
@@ -27,6 +30,7 @@ def decrypt_file():
     secure_file.close()
 
 
+# This function makes the file writeable and saves whatever is typed into the contents' section of the GUI.
 def save_file():
     secure_file = open(file.path, "w")
     secure_file.write(file.contents)
@@ -49,22 +53,31 @@ layout2 = [
     [psg.Text('File Contents:')],
     [psg.Multiline(key='contents', size=(60, 10))]
 ]
-
+# Combines the 2 layouts
 layout = [
     [psg.Column(layout1), psg.Column(layout2)],
 ]
+# New window with the title File Encryptor is created containing the layout above.
 window = psg.Window('File Encryptor', layout)
 attempts = 0
 isDecrypted = False
+# The GUI remains visible until the user presses the 'X' button to exit the application.
 while True:
     event, values = window.read()
+    # A try-except method where a file object is created and instantiated with the information entered by the user. If
+    # the user exits before a file is selected the except clause catches it and prints out "Program Ended" instead of
+    # showing an error.
     try:
         file = File((str(os.path.basename(values['-IN-']))), (str(values['password'])), (str(values['-IN-'])),
                     (str(values['contents'])))
     except:
         print("Program Ended.")
+    # If the user clicks on the 'X' the window closes.
     if event in (None, 'Exit'):
         break
+    # If the user clicks the 'Encrypt' button the user is required to type in the password twice. The re module is
+    # used see if the password entered by the user meets all the requirements. Password 'test' can be used to test
+    # the application.
     elif event in 'Encrypt':
         password = str(values['password'])
         second_password = str(values['password2'])
@@ -75,6 +88,7 @@ while True:
                     window['pass2'].update('')
                     encrypt_file()
                     isDecrypted = False
+                    attempts = 0
                 elif (len(file.password) < 6) or (len(file.password) > 11):
                     window['status'].update('File Status: Failed To Encrypt. Password must be between 6 and 10 \n'
                                             'characters in length and contain at least 1 lower case letter, '
@@ -112,6 +126,8 @@ while True:
                 window['status'].update('File Status: Failed To Encrypt. Password Required.')
         else:
             window['status'].update('File Status: Failed To Encrypt. No file selected.')
+    # When the decrypt button is pressed the password entered by the user must match the one they entered when it was
+    # encrypted. The user has 5 attempts to get the password correct otherwise the program shuts down.
     elif event in 'Decrypt':
         try:
             if password == file.password:
@@ -129,14 +145,19 @@ while True:
                 else:
                     window.close()
         except:
-            window['status'].update('File Status: Failed To Decrypt. No File Selected.')
+            if file.path == '':
+                window['status'].update('File Status: Failed To Decrypt. No File Selected.')
+            else:
+                decrypt_file()
+    # When the 'Save Changes' button is pressed the application checks to see if the file is decrypted. If the file
+    # is decrypted then the changes are saved.
     elif event in 'Save Changes':
-        try:
+        if file.path != '':
             if isDecrypted:
                 save_file()
             else:
                 window['status'].update('File Status: Changes Not Saved. File Encrypted.')
-        except:
+        else:
             window['status'].update('File Status: Changes Not Saved. No File Selected.')
 
 window.close()
