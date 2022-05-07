@@ -3,6 +3,7 @@ from File import File
 from cryptography.fernet import Fernet
 import os
 import re
+import cryptography
 
 
 # This function encrypts the file using the Cryptography package. The GUI is then updated and the encoded message is
@@ -149,6 +150,7 @@ while True:
                 window['status'].update('File Status: Failed To Decrypt. No File Selected.')
             else:
                 decrypt_file()
+                isDecrypted = True
     # When the 'Save Changes' button is pressed the application checks to see if the file is decrypted. If the file
     # is decrypted then the changes are saved.
     elif event in 'Save Changes':
@@ -156,7 +158,7 @@ while True:
             if isDecrypted:
                 save_file()
             else:
-                window['status'].update('File Status: Changes Not Saved. File Encrypted.')
+                window['status'].update('File Status: Changes Not Saved.')
         else:
             window['status'].update('File Status: Changes Not Saved. No File Selected.')
 
